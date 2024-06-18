@@ -47,19 +47,19 @@ namespace Objectivism.ObjectClasses
             var tree2 = tree.MapTree( this.DeReferenceIfRequired );
             this.Data = tree2;
             this.Access = prototype.Access;
-            this.AccessChangeMessageLevel = prototype.AccessChangeMessageLevel;
+            this.AccessChangedMessageLevel = prototype.AccessChangedMessageLevel;
         }
 
         public ObjectProperty( ObjectProperty other )
         {
             this.Access = other.Access;
             this.Data = other.Data.MapTree( this.DuplicateUtil );
-            this.AccessChangeMessageLevel = other.AccessChangeMessageLevel;
+            this.AccessChangedMessageLevel = other.AccessChangedMessageLevel;
         }
 
         public bool PreviewOn { get; internal set; } = true;
 
-        public GH_RuntimeMessageLevel AccessChangeMessageLevel { get; set; }
+        public GH_RuntimeMessageLevel AccessChangedMessageLevel { get; set; }
 
         public GH_Structure<IGH_Goo> Data { get; private set; }
         
@@ -165,7 +165,7 @@ namespace Objectivism.ObjectClasses
             writer.SetTree( "PropertyDataTree", this.Data );
             writer.SetInt32( "Access", (int) this.Access );
             writer.SetBoolean( "PreviewToggle", this.PreviewOn );
-            writer.SetByte( "AccessChangeMessageLevel", (byte) this.AccessChangeMessageLevel );
+            writer.SetByte( "AccessChangedMessageLevel", (byte) this.AccessChangedMessageLevel );
             return true;
         }
 
@@ -179,8 +179,8 @@ namespace Objectivism.ObjectClasses
             this.PreviewOn = boolValue;
 
             var byteValue = (byte) GH_RuntimeMessageLevel.Warning;            
-            reader.TryGetByte( "AccessChangeMessageLevel", ref byteValue );
-            this.AccessChangeMessageLevel = (GH_RuntimeMessageLevel) byteValue;
+            reader.TryGetByte( "AccessChangedMessageLevel", ref byteValue );
+            this.AccessChangedMessageLevel = (GH_RuntimeMessageLevel) byteValue;
             
             return true;
         }
