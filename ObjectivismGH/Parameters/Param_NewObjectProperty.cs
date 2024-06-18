@@ -137,14 +137,13 @@ namespace Objectivism.Parameters
 
         public override bool Read( GH_IReader reader )
         {
-            try
-            {
-                this.PreviewOn = reader.GetBoolean( "PreviewState" );
-            }
-            catch
-            {
-                this.PreviewOn = true;
-            }
+            var boolValue = true;
+            reader.TryGetBoolean( "PreviewState", ref boolValue );
+            this.PreviewOn = boolValue;
+
+            var byteValue = (byte) GH_RuntimeMessageLevel.Warning;
+            reader.TryGetByte( "AccessChangedMessageLevel", ref byteValue );
+            this.AccessChangedMessageLevel = (GH_RuntimeMessageLevel) byteValue;
 
             return base.Read( reader );
         }
@@ -152,6 +151,7 @@ namespace Objectivism.Parameters
         public override bool Write( GH_IWriter writer )
         {
             writer.SetBoolean( "PreviewState", this.PreviewOn );
+            writer.SetByte( "AccessChangedMessageLevel", (byte) this.AccessChangedMessageLevel );
             return base.Write( writer );
         }
     }
