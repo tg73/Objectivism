@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace Objectivism.Parameters
 {
-    public sealed class Param_NewObjectProperty : Param_GenericObject, IHasPreviewToggle
+    public sealed class Param_NewObjectProperty : Param_GenericObject, IHasPreviewToggle, IHasAccessChangedMessageLevel
     {
         private string _nickNameCache;
 
@@ -25,11 +25,14 @@ namespace Objectivism.Parameters
         }
 
         public override Guid ComponentGuid => new Guid( "81320c17-4090-470d-b036-95005338c2b1" );
+        
         public override string TypeName => "Object Property Data";
+        
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
         public bool PreviewOn { get; private set; } = true;
 
+        public GH_RuntimeMessageLevel AccessChangedMessageLevel { get; private set; } = GH_RuntimeMessageLevel.Warning;
 
         internal void CommitNickName() => this._nickNameCache = this.NickName;
 
@@ -63,13 +66,15 @@ namespace Objectivism.Parameters
 
             Menu_AppendSeparator( menu );
 
-            var isItem = this.Access == GH_ParamAccess.item;
-            var isList = this.Access == GH_ParamAccess.list;
-            var isTree = this.Access == GH_ParamAccess.tree;
+            Menu_AppendItem( menu, "Item Access", this.AccessEventHandler( GH_ParamAccess.item ), true, this.Access == GH_ParamAccess.item );
+            Menu_AppendItem( menu, "List Access", this.AccessEventHandler( GH_ParamAccess.list ), true, this.Access == GH_ParamAccess.list );
+            Menu_AppendItem( menu, "Tree Access", this.AccessEventHandler( GH_ParamAccess.tree ), true, this.Access == GH_ParamAccess.tree );
 
-            Menu_AppendItem( menu, "Item Access", this.ItemAccessEventHandler, true, isItem );
-            Menu_AppendItem( menu, "List Access", this.ListAccessEventHandler, true, isList );
-            Menu_AppendItem( menu, "Tree Access", this.TreeAccessEventHandler, true, isTree );
+            Menu_AppendSeparator( menu );
+
+            Menu_AppendItem( menu, "Access Change is Warning", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Warning ), true, this.AccessChangedMessageLevel == GH_RuntimeMessageLevel.Warning );
+            Menu_AppendItem( menu, "Access Change is Error", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Error ), true, this.AccessChangedMessageLevel == GH_RuntimeMessageLevel.Error );
+            Menu_AppendItem( menu, "Access Change is Remark", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Remark ), true, this.AccessChangedMessageLevel == GH_RuntimeMessageLevel.Remark );
 
             Menu_AppendSeparator( menu );
 
@@ -103,35 +108,31 @@ namespace Objectivism.Parameters
                 form.ShowDialog();
             }
         }
-
-        public void ItemAccessEventHandler( object sender, EventArgs e )
+        
+        private EventHandler AccessEventHandler( GH_ParamAccess access )
         {
-            if ( this.Access != GH_ParamAccess.item )
+            return delegate ( object sender, EventArgs e )
             {
-                this.RecordUndoEvent( "Change access type" );
-                this.Access = GH_ParamAccess.item;
-                this.ExpireSolution( true );
-            }
+                if ( this.Access != access )
+                {
+                    this.RecordUndoEvent( "Change access type" );
+                    this.Access = access;
+                    this.ExpireSolution( true );
+                }
+            };
         }
 
-        public void ListAccessEventHandler( object sender, EventArgs e )
+        private EventHandler AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel level )
         {
-            if ( this.Access != GH_ParamAccess.list )
+            return delegate ( object sender, EventArgs e )
             {
-                this.RecordUndoEvent( "Change access type" );
-                this.Access = GH_ParamAccess.list;
-                this.ExpireSolution( true );
-            }
-        }
-
-        public void TreeAccessEventHandler( object sender, EventArgs e )
-        {
-            if ( this.Access != GH_ParamAccess.tree )
-            {
-                this.RecordUndoEvent( "Change access type" );
-                this.Access = GH_ParamAccess.tree;
-                this.ExpireSolution( true );
-            }
+                if ( this.AccessChangedMessageLevel != level )
+                {
+                    this.RecordUndoEvent( "Change access-changed message level" );
+                    this.AccessChangedMessageLevel = level;
+                    this.ExpireSolution( true );
+                }
+            };
         }
 
         public override bool Read( GH_IReader reader )

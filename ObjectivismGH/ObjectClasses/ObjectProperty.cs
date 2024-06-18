@@ -42,21 +42,27 @@ namespace Objectivism.ObjectClasses
             this.Access = PropertyAccess.Tree;
         }
 
-        internal ObjectProperty( GH_Structure<IGH_Goo> tree, PropertyAccess access )
+        internal ObjectProperty( GH_Structure<IGH_Goo> tree, ObjectProperty prototype )
         {
             var tree2 = tree.MapTree( this.DeReferenceIfRequired );
             this.Data = tree2;
-            this.Access = access;
+            this.Access = prototype.Access;
+            this.AccessChangeMessageLevel = prototype.AccessChangeMessageLevel;
         }
 
         public ObjectProperty( ObjectProperty other )
         {
             this.Access = other.Access;
             this.Data = other.Data.MapTree( this.DuplicateUtil );
+            this.AccessChangeMessageLevel = other.AccessChangeMessageLevel;
         }
 
         public bool PreviewOn { get; internal set; } = true;
+
+        public GH_RuntimeMessageLevel AccessChangeMessageLevel { get; set; }
+
         public GH_Structure<IGH_Goo> Data { get; private set; }
+        
         internal PropertyAccess Access { get; private set; }
 
         public BoundingBox BoundingBox
@@ -82,6 +88,7 @@ namespace Objectivism.ObjectClasses
         }
 
         public bool HasGeometry => this.Data.Any( goo => goo is IGH_GeometricGoo );
+        
         public BoundingBox ClippingBox => this.BoundingBox;
 
         public void DrawViewportWires( GH_PreviewWireArgs args )
@@ -152,12 +159,13 @@ namespace Objectivism.ObjectClasses
 
             return goo?.Duplicate();
         }
-
+        
         public bool WriteProp( GH_IWriter writer )
         {
             writer.SetTree( "PropertyDataTree", this.Data );
             writer.SetInt32( "Access", (int) this.Access );
             writer.SetBoolean( "PreviewToggle", this.PreviewOn );
+            writer.SetByte( "AccessChangeMessageLevel", (byte) this.AccessChangeMessageLevel );
             return true;
         }
 
@@ -165,28 +173,28 @@ namespace Objectivism.ObjectClasses
         {
             this.Data = reader.GetTree( "PropertyDataTree" );
             this.Access = (PropertyAccess) reader.GetInt32( "Access" );
-            try
-            {
-                this.PreviewOn = reader.GetBoolean( "PreviewToggle" );
-            }
-            catch
-            {
-                this.PreviewOn = true;
-            }
+            
+            var boolValue = true;
+            reader.TryGetBoolean( "PreviewToggle", ref boolValue );
+            this.PreviewOn = boolValue;
 
+            var byteValue = (byte) GH_RuntimeMessageLevel.Warning;            
+            reader.TryGetByte( "AccessChangeMessageLevel", ref byteValue );
+            this.AccessChangeMessageLevel = (GH_RuntimeMessageLevel) byteValue;
+            
             return true;
         }
 
         public ObjectProperty Transform( Transform xform )
         {
             var newData = this.Data.MapTree( TransformUtil, xform );
-            return new ObjectProperty( newData, this.Access );
+            return new ObjectProperty( newData, this );
         }
 
         public ObjectProperty Morph( SpaceMorph morph )
         {
             var newData = this.Data.MapTree( MorphUtil, morph );
-            return new ObjectProperty( newData, this.Access );
+            return new ObjectProperty( newData, this );
         }
 
         public static IGH_Goo TransformUtil( IGH_Goo item, Transform xform ) =>

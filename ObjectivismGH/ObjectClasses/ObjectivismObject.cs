@@ -127,12 +127,12 @@ namespace Objectivism.ObjectClasses
             {
                 if ( newObj._propertyGetter.ContainsKey( name ) )
                 {
-                    var currentAccess = newObj.GetProperty( name ).Access;
+                    var currentProp = newObj.GetProperty( name );
                     var newAccess = newProp.Access;
-                    if ( newAccess != currentAccess )
+                    if ( newAccess != currentProp.Access )
 
                     {
-                        accessInfo.AddConflict( name );
+                        accessInfo.AddConflict( name, currentProp.AccessChangeMessageLevel );
                     }
 
                     newObj._properties[this._propertyGetter[name]] = (name, newProp);
@@ -280,12 +280,30 @@ namespace Objectivism.ObjectClasses
 
         internal class AccessInfo
         {
-            private readonly List<string> _conflicts = new List<string>();
+            private List<(string PropertyName, GH_RuntimeMessageLevel MessageLevel)> _conflicts = null;
 
-            public void AddConflict( string propertyName ) => this._conflicts.Add( propertyName );
+            public void AddConflict( string propertyName, GH_RuntimeMessageLevel messageLevel ) 
+                => (this._conflicts ??= new List<(string PropertyName, GH_RuntimeMessageLevel MessageLevel)>()).Add( (propertyName, messageLevel) );
 
-            public void BroadcastConflicts( GH_Component comp ) => this._conflicts.ForEach( conflict =>
-                comp.AddRuntimeMessage( GH_RuntimeMessageLevel.Warning, $"{conflict} has its access level changed" ) );
+            public void BroadcastConflicts( GH_Component comp )
+            {
+                if ( this._conflicts == null )
+                {
+                    return;
+                }
+
+                foreach ( var conflict in this._conflicts )
+                {
+                    switch ( conflict.MessageLevel )
+                    {
+                        case GH_RuntimeMessageLevel.Remark:
+                        case GH_RuntimeMessageLevel.Warning:
+                        case GH_RuntimeMessageLevel.Error:
+                            comp.AddRuntimeMessage( conflict.MessageLevel, $"{conflict} has its access level changed" );
+                            break;
+                    }
+                }
+            }
         }
     }
 }

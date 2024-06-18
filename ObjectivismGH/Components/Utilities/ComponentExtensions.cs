@@ -13,11 +13,17 @@ namespace Objectivism.Components.Utilities
             IGH_DataAccess daObject, int paramIndex )
         {
             var previewOn = true;
+            var accessChangedMessageLevel = GH_RuntimeMessageLevel.Warning;
             var param = component.Params.Input[paramIndex];
 
             if ( param is IHasPreviewToggle hasPreviewToggle )
             {
                 previewOn = hasPreviewToggle.PreviewOn;
+            }
+
+            if ( param is IHasAccessChangedMessageLevel hasAccessChangedMessageLevel )
+            {
+                accessChangedMessageLevel = hasAccessChangedMessageLevel.AccessChangedMessageLevel;
             }
 
             ObjectProperty prop;
@@ -46,6 +52,7 @@ namespace Objectivism.Components.Utilities
             }
 
             prop.PreviewOn = previewOn;
+            prop.AccessChangeMessageLevel = accessChangedMessageLevel;
             return (name, prop);
         }
     }
