@@ -130,11 +130,11 @@ namespace Objectivism.ObjectClasses
                     var currentProp = newObj.GetProperty( name );
                     var newAccess = newProp.Access;
                     if ( newAccess != currentProp.Access )
-
                     {
-                        accessInfo.AddConflict( name, currentProp.AccessChangeMessageLevel );
+                        accessInfo.AddConflict( name, currentProp.AccessChangedMessageLevel );
                     }
 
+                    newProp.AccessChangedMessageLevel = currentProp.AccessChangedMessageLevel;
                     newObj._properties[this._propertyGetter[name]] = (name, newProp);
                 }
                 else

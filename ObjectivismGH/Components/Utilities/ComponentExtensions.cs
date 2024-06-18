@@ -84,7 +84,7 @@ namespace Objectivism.Components.Utilities
             }
 
             prop.PreviewOn = previewOn;
-            prop.AccessChangeMessageLevel = accessChangedMessageLevel;
+            prop.AccessChangedMessageLevel = accessChangedMessageLevel;
             return (name, prop);
         }
     }
