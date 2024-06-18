@@ -32,7 +32,7 @@ namespace Objectivism.Parameters
 
         public bool PreviewOn { get; private set; } = true;
 
-        public GH_RuntimeMessageLevel AccessChangedMessageLevel { get; private set; } = GH_RuntimeMessageLevel.Warning;
+        public GH_RuntimeMessageLevel AccessChangedMessageLevel { get; set; } = GH_RuntimeMessageLevel.Warning;
 
         internal void CommitNickName() => this._nickNameCache = this.NickName;
 

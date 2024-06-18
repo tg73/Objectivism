@@ -4,11 +4,43 @@ using Grasshopper.Kernel.Types;
 using Objectivism.ObjectClasses;
 using Objectivism.Parameters;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Objectivism.Components.Utilities
 {
     internal static class ComponentExtensions
     {
+        public static GH_RuntimeMessageLevel GetAccessChangedMessageLevel( this IGH_Param param )
+            => param is IHasAccessChangedMessageLevel hasAccessChangedMessageLevel
+                    ? hasAccessChangedMessageLevel.AccessChangedMessageLevel
+                    : GH_RuntimeMessageLevel.Warning;
+
+        public static GH_RuntimeMessageLevel GetAccessChangedMessageLevel( this IGH_Component component, int paramIndex ) 
+            => component.Params.Input[paramIndex] is IHasAccessChangedMessageLevel hasAccessChangedMessageLevel
+                    ? hasAccessChangedMessageLevel.AccessChangedMessageLevel
+                    : GH_RuntimeMessageLevel.Warning;
+
+        public static GH_RuntimeMessageLevel? GetUnanimousAccessChangedMessageLevel( this IGH_Component component )
+        {
+            var inputParams = component.Params.Input;
+
+            if ( inputParams.Count == 0 )
+            {
+                return GH_RuntimeMessageLevel.Warning;
+            }
+
+            var first = inputParams[0].GetAccessChangedMessageLevel();
+
+            if ( inputParams.Count == 1 )
+            {
+                return first;
+            }
+
+            return inputParams.Skip( 1 ).All( p => p.GetAccessChangedMessageLevel() == first )
+                ? (GH_RuntimeMessageLevel?) first
+                : null;
+        }
+
         public static (string Name, ObjectProperty Property) GetProperty( this IGH_Component component,
             IGH_DataAccess daObject, int paramIndex )
         {

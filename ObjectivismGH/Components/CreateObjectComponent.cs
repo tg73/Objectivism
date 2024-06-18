@@ -135,13 +135,43 @@ namespace Objectivism.Components
             }
         }
 
-        public override void AppendAdditionalMenuItems( ToolStripDropDown menu ) =>
+        public override void AppendAdditionalMenuItems( ToolStripDropDown menu )
+        {
             Menu_AppendItem( menu, "Recompute", this.UpdateObjectEventHandler );
+
+            Menu_AppendSeparator( menu );
+
+            var level = this.GetUnanimousAccessChangedMessageLevel();
+
+            Menu_AppendItem( menu, "Access Change is Warning", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Warning ), true, level == GH_RuntimeMessageLevel.Warning );
+            Menu_AppendItem( menu, "Access Change is Error", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Error ), true, level == GH_RuntimeMessageLevel.Error );
+            Menu_AppendItem( menu, "Access Change is Remark", this.AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel.Remark ), true, level == GH_RuntimeMessageLevel.Remark );
+        }
 
         private void UpdateObjectEventHandler( object sender, EventArgs e )
         {
             this.Params.Input.ForEach( p => p.ExpireSolution( false ) );
             this.ExpireSolution( true );
         }
+
+        private EventHandler AccessChangedMessageLevelEventHandler( GH_RuntimeMessageLevel level )
+        {
+            return delegate ( object sender, EventArgs e )
+            {
+                if ( this.GetUnanimousAccessChangedMessageLevel() != level )
+                {
+                    this.RecordUndoEvent( "Change access-changed message level for object" );
+                    foreach ( var p in this.Params.Input )
+                    {
+                        if ( p is IHasAccessChangedMessageLevel hasLevel)
+                        {
+                            hasLevel.AccessChangedMessageLevel = level;
+                        }
+                    }
+                    this.ExpireSolution( true );
+                }
+            };
+        }
+
     }
 }
